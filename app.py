@@ -13,7 +13,7 @@ import os
 
 
 #Keys
-os.environ['OPENAI_API_KEY'] = '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'
+os.environ['OPENAI_API_KEY'] = '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'
 
 
 
