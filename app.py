@@ -9,9 +9,10 @@ import openai
 import hmac
 
 # Set up your OpenAI API key securely
-os.environ['OPENAI_API_KEY'] = 'sk-proj-qtpho349zVsagqVHHYgPT3BlbkFJ7Ifxa7jD4tszGsRvBu2z'
-openai.api_key = 'sk-proj-qtpho349zVsagqVHHYgPT3BlbkFJ7Ifxa7jD4tszGsRvBu2z'
+openai_api_key = st.secrets["openai_api_key"]
 
+# Set the API key for OpenAI
+openai.api_key = openai_api_key
 
 def check_password():
     """Returns `True` if the user had a correct password."""
