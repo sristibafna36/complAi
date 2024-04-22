@@ -81,7 +81,7 @@ def retrieve_documents_by_query(query, index, model, embeddings, documents, sour
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # Load embeddings, document data, and sources
-embeddings, documents, sources = load_embeddings_and_docs('E:\\Bulb\\Salary\\docs\\merged_embeddings.json')
+embeddings, documents, sources = load_embeddings_and_docs('docs/merged_embeddings.json')
 faiss_index = setup_faiss_index(embeddings)
 
 # Streamlit user interface for the application
