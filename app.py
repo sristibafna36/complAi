@@ -11,7 +11,6 @@ import hmac
 # Set up your OpenAI API key securely
 openai_api_key = st.secrets["OpenAI_key"]
 
-openai_api_key = os.environ.get('OPENAI_API_KEY')
 # Set the API key for OpenAI
 openai.api_key = openai_api_key
 
