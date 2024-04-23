@@ -1,65 +1,79 @@
-# MultiPDF Chat App
 
-> You can find the tutorial for this project on [YouTube](https://youtu.be/dXxQ0LR-3Hg).
+# ComplAi Genie
 
-## Introduction
-------------
-The MultiPDF Chat App is a Python application that allows you to chat with multiple PDF documents. You can ask questions about the PDFs using natural language, and the application will provide relevant responses based on the content of the documents. This app utilizes a language model to generate accurate answers to your queries. Please note that the app will only respond to questions related to the loaded PDFs.
+## Overview
 
-## How It Works
-------------
+ComplAi Genie is an innovative SaaS application built to provide precise, accurate answers to regulatory queries, specifically focusing on RBI circulars. It leverages a combination of RAG + LLM and a streamlined user interface to help financial professionals easily navigate complex regulatory environments.
 
-![MultiPDF Chat App Diagram](./docs/PDF-LangChain.jpg)
+You can checkout a demo here: [Youtube](https://www.youtube.com/watch?si=fOyKV5tJ8YO6Ss61&v=rEp0MwHCUN8&feature=youtu.be)
 
-The application follows these steps to provide responses to your questions:
+## Features
 
-1. PDF Loading: The app reads multiple PDF documents and extracts their text content.
+- **Regulatory Query Tool**: Instantly provides answers and insights related to financial services and compliance queries, leveraging a vast database of regulatory documents.
+- **Training Module**: Offers an educational interface for banking staff, significantly reducing the training period and facilitating rapid deployment in customer-facing roles.
 
-2. Text Chunking: The extracted text is divided into smaller chunks that can be processed effectively.
+## Target Audience
 
-3. Language Model: The application utilizes a language model to generate vector representations (embeddings) of the text chunks.
-
-4. Similarity Matching: When you ask a question, the app compares it with the text chunks and identifies the most semantically similar ones.
-
-5. Response Generation: The selected chunks are passed to the language model, which generates a response based on the relevant content of the PDFs.
-
-## Dependencies and Installation
-----------------------------
-To install the MultiPDF Chat App, please follow these steps:
-
-1. Clone the repository to your local machine.
-
-2. Install the required dependencies by running the following command:
-   ```
-   pip install -r requirements.txt
-   ```
-
-3. Obtain an API key from OpenAI and add it to the `.env` file in the project directory.
-```commandline
-OPENAI_API_KEY=your_secrit_api_key
-```
+- **Urban Cooperative Banks (UCBs)**
+- **Non-Banking Financial Companies (NBFCs)**
+- **FinTech Startups**
+- **Retail Banking Staff**
 
 ## Usage
------
-To use the MultiPDF Chat App, follow these steps:
 
-1. Ensure that you have installed the required dependencies and added the OpenAI API key to the `.env` file.
+1. **Query Handling**: Simply type your regulatory or financial service-related question into the query box and receive precise, context-aware answers.
+2. **Training Support**: Use the training module to access interactive learning resources designed specifically for new bank employees.
 
-2. Run the `main.py` file using the Streamlit CLI. Execute the following command:
-   ```
-   streamlit run app.py
-   ```
+## Getting Started
 
-3. The application will launch in your default web browser, displaying the user interface.
+### Prerequisites
 
-4. Load multiple PDF documents into the app by following the provided instructions.
+- Python 3.8+
+- Streamlit
+- FAISS
+- Sentence Transformers
+- OpenAI API Key
 
-5. Ask questions in natural language about the loaded PDFs using the chat interface.
+### Installation
+
+Clone the repository:
+```bash
+git clone https://github.com/yourusername/complai-genie.git
+cd complai-genie
+```
+
+Install the required packages:
+```bash
+pip install -r requirements.txt
+```
+
+### Configuration
+
+Set up your OpenAI API key in your environment or `.streamlit/secrets.toml`:
+```toml
+[secrets]
+OpenAI_key = "your_openai_api_key_here"
+```
+
+### Running the Application
+
+Launch the app by running:
+```bash
+streamlit run app.py
+```
+
+Access the app through your web browser at the address shown in the terminal, typically `http://localhost:8501`.
 
 ## Contributing
-------------
-This repository is intended for educational purposes and does not accept further contributions. It serves as supporting material for a YouTube tutorial that demonstrates how to build this project. Feel free to utilize and enhance the app based on your own requirements.
+
+We welcome contributions from the community, whether they are feature requests, improvements, or bug fixes. Please follow the standard fork-branch-pull request workflow.
 
 ## License
--------
-The MultiPDF Chat App is released under the [MIT License](https://opensource.org/licenses/MIT).
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+## Contact
+
+Abhishek Mishra - [abhishekmishramm2@gmail.com](mailto:abhishekmishramm2@gmail.com)
+Project Link: [hhttps://github.com/abhishekmishramm1997/complAi](https://github.com/abhishekmishramm1997/complAi)
+
