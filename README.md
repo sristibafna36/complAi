@@ -12,7 +12,7 @@ You can checkout a demo here: [Youtube](https://www.youtube.com/watch?si=fOyKV5t
 - **Regulatory Query Tool**: Instantly provides answers and insights related to financial services and compliance queries, leveraging a vast database of regulatory documents.
 - **Training Module**: Offers an educational interface for banking staff, significantly reducing the training period and facilitating rapid deployment in customer-facing roles.
 
-## Target Audience
+## Target Group
 
 - **Urban Cooperative Banks (UCBs)**
 - **Non-Banking Financial Companies (NBFCs)**
