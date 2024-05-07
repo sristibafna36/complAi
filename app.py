@@ -7,12 +7,18 @@ import streamlit as st
 from sentence_transformers import SentenceTransformer
 import openai
 import hmac
+from streamlit_pdf_viewer import pdf_viewer
+
 
 # Set up your OpenAI API key securely
 openai_api_key = st.secrets["OpenAI_key"]
 
 # Set the API key for OpenAI
 openai.api_key = openai_api_key
+
+# Define the base directory for your PDF files
+base_dir = ('docs')
+
 
 def check_password():
     """Returns `True` if the user had a correct password."""
@@ -92,6 +98,9 @@ If you like ComplAi Genie, please show us some love by sharing your feedback ❤
 """)
 query = st.text_input("Ask any question about RBI circulars.")
 
+# Define the base directory for your PDF files
+# base_dir = r"E:\Bulb\Salary\docs"
+
 if st.button("Submit"):
     try:
         retrieved_docs, retrieved_sources = retrieve_documents_by_query(query, faiss_index, model, embeddings, documents, sources, k=5)
@@ -103,19 +112,18 @@ if st.button("Submit"):
                 {"role": "user", "content": query}
             ]
         )
-        # Display the answer
         answer = response.choices[0].message['content']
         st.write("Answer:")
         st.write(answer)
-        
-        # Display the sources with clickable links
+
+        # Display the sources with clickable links that open in the PDF viewer
         st.write("Sources:")
-        for source in set(retrieved_sources):  # Use set to avoid duplicate sources
-            # Generate the URL path based on the source filenames
-            file_path = os.path.join('docs', source)
-            url_path = f"./{file_path}"
-            link = f"[{source}]({url_path})"
-            st.markdown(link)
+        for source in set(retrieved_sources):
+            file_path = os.path.join(base_dir, source)
+            if os.path.exists(file_path):
+                st.write(f"{source}:")
+                pdf_viewer(input=file_path, height=500)  # Adjust the height as needed
+            else:
+                st.write(f"File {source} not found")
     except Exception as e:
         st.error(f"An error occurred: {e}")
-
