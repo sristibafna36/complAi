@@ -88,7 +88,7 @@ faiss_index = setup_faiss_index(embeddings)
 st.title("ComplAi Genie")
 st.markdown("""
 If you like ComplAi Genie, please show us some love by sharing your feedback ❤️: 
-[Feedback Form](https://bit.ly/form_link)
+[Feedback Form](https://forms.gle/8WmZqafnWGivfV4p9)
 """)
 query = st.text_input("Ask any question about RBI circulars.")
 
