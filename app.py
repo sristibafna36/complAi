@@ -17,7 +17,7 @@ openai_api_key = st.secrets["OpenAI_key"]
 openai.api_key = openai_api_key
 
 # Define the base directory for your PDF files
-base_dir = ('docs')
+base_dir = "docs"
 
 
 def check_password():
@@ -99,7 +99,6 @@ If you like ComplAi Genie, please show us some love by sharing your feedback ❤
 query = st.text_input("Ask any question about RBI circulars.")
 
 # Define the base directory for your PDF files
-# base_dir = r"E:\Bulb\Salary\docs"
 
 if st.button("Submit"):
     try:
@@ -108,7 +107,7 @@ if st.button("Submit"):
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "Provide answer to the query related to RBI circulars for the following user question. Double check the info to include info from the latest circular. Start with regulations in the ongoing year, if nothing has been issued, then try documents from previous years and so on. Once answered, provide a list of paragraphs and all circular links referred in the end."},
+                {"role": "system", "content": "You are trained and experienced compliance RBI Official. Provide answer to the query related to compliance from all the RBI regulations issued till now. for the following user question. Once answered, provide a list of paragraphs and all circular links referred in the end along with crisp and very pointed action items for the regulated entities."},
                 {"role": "user", "content": query}
             ]
         )
