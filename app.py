@@ -13,6 +13,7 @@ from streamlit_pdf_viewer import pdf_viewer
 # File paths for user data and activity logs
 USER_DATA_FILE = "user_data.json"
 ACTIVITY_LOG_FILE = "activity_log.txt"
+RLHF_DATA_FILE = "rlhf_data.txt"
 SECRET_KEY = "supersecretkey"  # Replace this with a proper secret key
 
 # Set up your OpenAI API key securely
@@ -43,6 +44,15 @@ def log_activity(message):
     with open(ACTIVITY_LOG_FILE, 'a') as f:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         f.write(f"[{timestamp}] {message}\n")
+
+# Log RLHF data to a file
+def log_rlhf_data(question, response, feedback):
+    """Log question, response, and feedback data for RLHF."""
+    with open(RLHF_DATA_FILE, 'a') as f:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        f.write(f"[{timestamp}] Question: {question}\n")
+        f.write(f"[{timestamp}] Response: {response}\n")
+        f.write(f"[{timestamp}] Feedback: {feedback}\n\n")
 
 # Hash a password using SHA-256
 def hash_password(password):
@@ -85,8 +95,6 @@ def registration_form(users):
     with st.form("Register"):
         name = st.text_input("Name")
         username = st.text_input("Username")
-        email = st.text_input("Email")
-        contact_no = st.text_input("Contact No.")
         password = st.text_input("Password", type="password")
         organization = st.text_input("Organization")
         purpose = st.text_area("Purpose for using this tool")
@@ -108,7 +116,8 @@ def registration_form(users):
                 st.session_state["register"] = False
                 st.experimental_rerun()
 
-# Load document embeddings, texts, and sources from a JSON file
+# Cache document embeddings, texts, and sources
+@st.cache_data
 def load_embeddings_and_docs(json_file_path):
     with open(json_file_path, 'r') as file:
         data = json.load(file)
@@ -117,7 +126,8 @@ def load_embeddings_and_docs(json_file_path):
     sources = [doc['document'] for doc in data]  # Use PDF names as sources
     return embeddings, documents, sources
 
-# Set up a FAISS index for efficient document similarity search
+# Cache FAISS index setup
+@st.cache_resource
 def setup_faiss_index(embeddings):
     dimension = embeddings.shape[1]
     index = faiss.IndexFlatL2(dimension)
@@ -145,6 +155,13 @@ if "authenticated" not in st.session_state:
 if "register" not in st.session_state:
     st.session_state["register"] = False
 
+# Initialize feedback status in session state
+if "feedback_status" not in st.session_state:
+    st.session_state["feedback_status"] = None
+
+if "query_response" not in st.session_state:
+    st.session_state["query_response"] = {"query": "", "response": "", "sources": []}
+
 if not st.session_state["authenticated"]:
     if st.session_state["register"]:
         registration_form(load_users())
@@ -171,25 +188,48 @@ else:
                 ]
             )
             answer = response.choices[0].message['content']
-            st.write("Answer:")
-            st.write(answer)
+            st.session_state["query_response"] = {"query": query, "response": answer, "sources": retrieved_sources}
 
-            # Display the sources with clickable links that open in the PDF viewer
-            st.write("Sources:")
-            for source in set(retrieved_sources):
-                file_path = os.path.join(base_dir, source)
-                if os.path.exists(file_path):
-                    st.write(f"{source}:")
-                    pdf_viewer(input=file_path, height=500)  # Adjust the height as needed
-                else:
-                    st.write(f"File {source} not found")
         except Exception as e:
             st.error(f"An error occurred: {e}")
+
+    query_response = st.session_state["query_response"]
+
+    if query_response["response"]:
+        st.write("Answer:")
+        st.write(query_response["response"])
+
+        # Feedback buttons with icons side by side
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("👍", key="upvote"):
+                log_rlhf_data(query_response["query"], query_response["response"], "upvote")
+                st.session_state["feedback_status"] = "upvote"
+        with col2:
+            if st.button("👎", key="downvote"):
+                log_rlhf_data(query_response["query"], query_response["response"], "downvote")
+                st.session_state["feedback_status"] = "downvote"
+
+        # Display a thank-you message based on the vote status
+        if st.session_state["feedback_status"] == "upvote" or st.session_state["feedback_status"] == "downvote":
+            st.success("Thank you for your feedback!")
+
+        # Display the sources with clickable links that open in the PDF viewer
+        st.write("Sources:")
+        for source in set(query_response["sources"]):
+            file_path = os.path.join(base_dir, source)
+            if os.path.exists(file_path):
+                st.write(f"{source}:")
+                pdf_viewer(input=file_path, height=500)  # Adjust the height as needed
+            else:
+                st.write(f"File {source} not found")
 
     # Application content (logout button)
     if st.button("Logout"):
         log_activity(f"User {st.session_state['current_user']} logged out")
         st.session_state["authenticated"] = False
         st.session_state["register"] = False
+        st.session_state["feedback_status"] = None
+        st.session_state["query_response"] = {"query": "", "response": "", "sources": []}
         del st.session_state["current_user"]
         st.experimental_rerun()
