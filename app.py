@@ -339,19 +339,16 @@ else:
 
         # Display the sources with clickable links that open in the PDF viewer
         st.write("Sources:")
-        for source, metadata in zip(query_response["sources"], query_response["metadata"]):
+        for i, (source, metadata) in enumerate(zip(query_response["sources"], query_response["metadata"])):
             file_path = os.path.join(base_dir, source)
             if os.path.exists(file_path):
                 st.write(f"**Title**: {metadata.get('title', 'N/A')} \n")
                 st.write(f"**Circular Number**: {metadata.get('code', 'N/A')} \n")
                 st.write(f"**Addressed To**: {metadata.get('department', 'N/A')} \n")
                 st.write(f"**Date of Issue**: {metadata.get('date_of_issue', 'N/A')}")
-                pdf_viewer(input=file_path, height=500)  # Adjust the height as needed
+                pdf_viewer(input=file_path, height=500, key=f"pdf_viewer_{i}")  # Ensure unique key for each viewer
             else:
                 st.write(f"File {source} not found")
-
-
-
         
 
     # Application content (logout button)
