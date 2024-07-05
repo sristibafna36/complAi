@@ -27,7 +27,7 @@ openai_api_key = st.secrets["OpenAI_key"]
 openai.api_key = openai_api_key
 
 # Define the base directory for your PDF files
-base_dir = "RBI_Directions\\ALL_PDFs"
+base_dir = "ALL_PDFs"
 
 # Load user data from a JSON file
 def load_users():
@@ -70,11 +70,19 @@ def find_best_match(input_code, all_codes):
     return best_match
 
 # Log user activity with a timestamp
-def log_activity(message):
-    """Log activity messages with a timestamp to a log file."""
+def log_activity(message, query=None, response=None, answer=None):
+    """Log activity messages with a timestamp to a log file, including query, response, and answer."""
     with open(ACTIVITY_LOG_FILE, 'a') as f:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         f.write(f"[{timestamp}] {message}\n")
+        if query:
+            f.write(f"Query: {query}\n")
+        if response:
+            f.write(f"Response: {response}\n")
+        if answer:
+            f.write(f"Answer: {answer}\n")
+        f.write("\n")
+
 
 # Log RLHF data to a file
 def log_rlhf_data(question, response, feedback):
@@ -259,6 +267,9 @@ else:
             )
             answer = response.choices[0].message['content']
             st.session_state["query_response"] = {"query": query, "response": answer, "sources": retrieved_sources, "metadata": retrieved_metadata}
+            
+            # Log the query, response, and answer
+            log_activity(f"Query processed for user {st.session_state['current_user']}", query=query, response=context, answer=answer)
 
         except Exception as e:
             st.error(f"An error occurred: {e}")
