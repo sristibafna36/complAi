@@ -5,10 +5,16 @@ import faiss
 import streamlit as st
 from sentence_transformers import SentenceTransformer
 import openai
+import fitz  # Correct import for PyMuPDF
+from datetime import datetime
 import hmac
 import hashlib
-from datetime import datetime
 from streamlit_pdf_viewer import pdf_viewer
+import re
+import Levenshtein as lev
+
+
+
 
 # File paths for user data and activity logs
 USER_DATA_FILE = "user_data.json"
@@ -21,7 +27,7 @@ openai_api_key = st.secrets["OpenAI_key"]
 openai.api_key = openai_api_key
 
 # Define the base directory for your PDF files
-base_dir = "docs"
+base_dir = "RBI_Directions\\ALL_PDFs"
 
 # Load user data from a JSON file
 def load_users():
@@ -37,6 +43,31 @@ def save_users(users):
     """Save users to a JSON file."""
     with open(USER_DATA_FILE, 'w') as f:
         json.dump(users, f, indent=4)
+
+
+#Clean Circular Numbers
+def clean_code(code):
+    if isinstance(code, float):  # Handle float values which might be NaN
+        code = ""
+    # Ensure the code is a string and remove newlines and leading/trailing whitespace
+    code = str(code).replace('\n', '').strip()
+    # Optional: remove all non-alphanumeric characters except slashes and periods
+    code = re.sub(r'[^a-zA-Z0-9/.]', '', code)
+    return code
+
+
+#Find Best Match for Code
+def find_best_match(input_code, all_codes):
+    # Clean the input code
+    input_code = clean_code(input_code)
+    # Calculate Levenshtein distance to each code, return the code with the smallest distance
+    best_match, min_distance = None, float('inf')
+    for code in all_codes:
+        current_distance = lev.distance(input_code, clean_code(code))
+        if current_distance < min_distance:
+            min_distance = current_distance
+            best_match = code
+    return best_match
 
 # Log user activity with a timestamp
 def log_activity(message):
@@ -77,7 +108,7 @@ def check_password():
                     st.session_state["authenticated"] = True
                     st.session_state["current_user"] = username
                     log_activity(f"User {username} logged in")
-                    st.experimental_rerun()
+                    st.rerun()
                 else:
                     st.error("Incorrect username or password.")
 
@@ -114,17 +145,29 @@ def registration_form(users):
                 log_activity(f"User {username} registered")
                 st.success("Registration successful! Redirecting to login page...")
                 st.session_state["register"] = False
-                st.experimental_rerun()
-
+                st.rerun()
 # Cache document embeddings, texts, and sources
 @st.cache_data
 def load_embeddings_and_docs(json_file_path):
     with open(json_file_path, 'r') as file:
         data = json.load(file)
     embeddings = np.array([np.array(doc['embedding']) for doc in data])
-    documents = [doc['document'] for doc in data]
-    sources = [doc['document'] for doc in data]  # Use PDF names as sources
-    return embeddings, documents, sources
+    documents = [doc.get('text', '') for doc in data]  # Use full text or substantial content as document content
+    sources = [doc['pdf_filename'] for doc in data]  # Use PDF names as sources
+    metadata = [
+        {
+            "title": doc.get("title", ""),
+            "code": doc.get("code", ""),
+            "department": doc.get("department", ""),
+            "pdf_filename": doc['pdf_filename'],
+            "link": doc.get("link", ""),
+            "date_of_issue": doc.get("date_of_issue", "")
+        }
+        for doc in data
+    ]  # Extract metadata including circular number and department
+    return embeddings, documents, sources, metadata
+
+
 
 # Cache FAISS index setup
 @st.cache_resource
@@ -135,20 +178,44 @@ def setup_faiss_index(embeddings):
     return index
 
 # Retrieve documents based on the query using FAISS
-def retrieve_documents_by_query(query, index, model, embeddings, documents, sources, k=5):
+def retrieve_documents_by_query(query, index, model, embeddings, documents, sources, metadata, k=15):
     query_embedding = model.encode([query])[0]
     _, indices = index.search(np.array([query_embedding]), k)
     retrieved_docs = [documents[idx] for idx in indices.flatten()]
     retrieved_sources = [sources[idx] for idx in indices.flatten()]
-    return retrieved_docs, retrieved_sources
+    retrieved_metadata = [metadata[idx] for idx in indices.flatten()]
+    return retrieved_docs, retrieved_sources, retrieved_metadata
+
+# Highlight text in a PDF file
+def highlight_text_in_pdf(pdf_path, passages):
+    """Highlights passages in a PDF file."""
+    doc = fitz.open(pdf_path)
+    for page in doc:
+        for passage in passages:
+            text_instances = page.search_for(passage)
+            for inst in text_instances:
+                page.add_highlight_annot(inst)
+    highlighted_pdf_path = pdf_path.replace(".pdf", "_highlighted.pdf")
+    doc.save(highlighted_pdf_path, garbage=4, deflate=True)
+    doc.close()
+    return highlighted_pdf_path
+
+# Create an iframe for PDF viewing
+def create_pdf_iframe(pdf_path, height=500):
+    """Creates an iframe to view a PDF document."""
+    encoded_pdf = pdf_path.replace("docs/", "")
+    pdf_url = f"https://raw.githubusercontent.com/your-github-username/your-repo/main/docs/{encoded_pdf}"
+    iframe_code = f"""
+        <iframe src="{pdf_url}" width="100%" height="{height}px" style="border:none;"></iframe>
+    """
+    return iframe_code
 
 # Initialize the Sentence Transformer model for query encoding
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # Load embeddings, document data, and sources
-embeddings, documents, sources = load_embeddings_and_docs('docs/merged_embeddings.json')
+embeddings, documents, sources, metadata = load_embeddings_and_docs('data/Database/combined_embeddings_with_metadata.json')
 faiss_index = setup_faiss_index(embeddings)
-
 # Check authentication or registration status
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
@@ -160,7 +227,10 @@ if "feedback_status" not in st.session_state:
     st.session_state["feedback_status"] = None
 
 if "query_response" not in st.session_state:
-    st.session_state["query_response"] = {"query": "", "response": "", "sources": []}
+    st.session_state["query_response"] = {"query": "", "response": "", "sources": [], "metadata": []}
+
+if 'search_by_code' not in st.session_state:
+    st.session_state['search_by_code'] = ''
 
 if not st.session_state["authenticated"]:
     if st.session_state["register"]:
@@ -178,22 +248,59 @@ else:
 
     if st.button("Submit"):
         try:
-            retrieved_docs, retrieved_sources = retrieve_documents_by_query(query, faiss_index, model, embeddings, documents, sources, k=5)
+            retrieved_docs, retrieved_sources, retrieved_metadata = retrieve_documents_by_query(query, faiss_index, model, embeddings, documents, sources, metadata, k=5)
             context = " ".join(retrieved_docs)  # Context from documents
             response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are a trained and experienced compliance RBI Official. Provide an answer to the query related to compliance from all the RBI regulations issued till now. Once answered, provide a list of all circular and regulation links referred to at the end along with crisp and very pointed action items for the regulated entities that their staff should be able to implement."},
-                    {"role": "user", "content": query}
+                    {"role": "system", "content": "You are a trained and experienced compliance RBI Official. Provide detailed and comprehensive answer to the query about compliance basis all the RBI regulations issued till now. Once answered, provide crisp and very pointed action items for the regulated entities."},
+                    {"role": "user", "content": f"Query: {query}\n\nContext: {context}"}
                 ]
             )
             answer = response.choices[0].message['content']
-            st.session_state["query_response"] = {"query": query, "response": answer, "sources": retrieved_sources}
+            st.session_state["query_response"] = {"query": query, "response": answer, "sources": retrieved_sources, "metadata": retrieved_metadata}
 
         except Exception as e:
             st.error(f"An error occurred: {e}")
 
+    # Button for searching by code with near match
+    # Add text input for searching by circular code
+    st.session_state['search_by_code'] = st.text_input("Search by Circular Code (e.g., RBI/2024-25/32 A. P. (DIR Series) Circular No. 04)")
+
+    # Button for searching by code with near match
+    if st.button("Search by Code"):
+        try:
+            input_code = st.session_state['search_by_code']  # Get the user input from session state
+            all_codes = [meta.get('code', '') for meta in metadata]  # Ensure all codes are treated as strings
+            best_match = find_best_match(input_code, all_codes)
+            
+            if best_match:
+                result = next((meta for meta in metadata if clean_code(meta.get('code', '')) == clean_code(best_match)), None)
+                if result:
+                    st.write("**Title**: ", result.get("title", "N/A"))
+                    st.write("**Code**: ", result.get("code", "N/A"))
+                    st.write("**Department**: ", result.get("department", "N/A"))
+                    st.write("**Date of Issue**: ", result.get("date_of_issue", "N/A"))
+
+                    # Display the PDF if it exists
+                    file_path = os.path.join(base_dir, result['pdf_filename'])
+                    if os.path.exists(file_path):
+                        pdf_viewer(input=file_path, height=500)
+                    else:
+                        st.write("File not found")
+                else:
+                    st.write("No close matches found.")
+            else:
+                st.write("No matches found.")
+
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
+
+
+
+
     query_response = st.session_state["query_response"]
+
 
     if query_response["response"]:
         st.write("Answer:")
@@ -216,13 +323,20 @@ else:
 
         # Display the sources with clickable links that open in the PDF viewer
         st.write("Sources:")
-        for source in set(query_response["sources"]):
+        for source, metadata in zip(query_response["sources"], query_response["metadata"]):
             file_path = os.path.join(base_dir, source)
             if os.path.exists(file_path):
-                st.write(f"{source}:")
+                st.write(f"**Title**: {metadata.get('title', 'N/A')} \n")
+                st.write(f"**Circular Number**: {metadata.get('code', 'N/A')} \n")
+                st.write(f"**Addressed To**: {metadata.get('department', 'N/A')} \n")
+                st.write(f"**Date of Issue**: {metadata.get('date_of_issue', 'N/A')}")
                 pdf_viewer(input=file_path, height=500)  # Adjust the height as needed
             else:
                 st.write(f"File {source} not found")
+
+
+
+        
 
     # Application content (logout button)
     if st.button("Logout"):
@@ -230,6 +344,8 @@ else:
         st.session_state["authenticated"] = False
         st.session_state["register"] = False
         st.session_state["feedback_status"] = None
-        st.session_state["query_response"] = {"query": "", "response": "", "sources": []}
+        st.session_state["query_response"] = {"query": "", "response": "", "sources": [], "metadata": []}
         del st.session_state["current_user"]
-        st.experimental_rerun()
+        st.rerun()
+
+

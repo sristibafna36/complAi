@@ -1,0 +1,2 @@
+[2024-06-11 16:21:03] User user registered
+[2024-06-11 16:21:18] User user logged in
