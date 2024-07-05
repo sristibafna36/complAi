@@ -159,6 +159,10 @@ def registration_form(users):
 def load_embeddings_and_docs(json_file_path):
     with open(json_file_path, 'r') as file:
         data = json.load(file)
+    
+    # Filter out withdrawn circulars
+    data = [doc for doc in data if doc.get('status', '').lower() != 'withdrawn']
+    
     embeddings = np.array([np.array(doc['embedding']) for doc in data])
     documents = [doc.get('text', '') for doc in data]  # Use full text or substantial content as document content
     sources = [doc['pdf_filename'] for doc in data]  # Use PDF names as sources
@@ -169,7 +173,8 @@ def load_embeddings_and_docs(json_file_path):
             "department": doc.get("department", ""),
             "pdf_filename": doc['pdf_filename'],
             "link": doc.get("link", ""),
-            "date_of_issue": doc.get("date_of_issue", "")
+            "date_of_issue": doc.get("date_of_issue", ""),
+            "status": doc.get("status", "")
         }
         for doc in data
     ]  # Extract metadata including circular number and department
