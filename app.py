@@ -116,7 +116,7 @@ def check_password():
                     st.session_state["authenticated"] = True
                     st.session_state["current_user"] = username
                     log_activity(f"User {username} logged in")
-                    st.rerun()
+                    st.experimental_rerun()  # Use experimental_rerun here
                 else:
                     st.error("Incorrect username or password.")
 
