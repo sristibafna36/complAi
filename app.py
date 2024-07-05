@@ -222,7 +222,7 @@ def create_pdf_iframe(pdf_path, height=500):
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # Load embeddings, document data, and sources
-embeddings, documents, sources, metadata = load_embeddings_and_docs('data/Database/combined_embeddings_with_metadata.json')
+embeddings, documents, sources, metadata = load_embeddings_and_docs('ALL_PDFs/combined_embeddings_with_metadata.json')
 faiss_index = setup_faiss_index(embeddings)
 # Check authentication or registration status
 if "authenticated" not in st.session_state:
