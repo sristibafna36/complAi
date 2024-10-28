@@ -12,6 +12,13 @@ import hashlib
 from streamlit_pdf_viewer import pdf_viewer
 import re
 import Levenshtein as lev
+from dotenv import load_dotenv
+import openai
+import os
+
+load_dotenv()  # Load environment variables from .env
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
 
 
 
@@ -23,8 +30,8 @@ RLHF_DATA_FILE = "rlhf_data.txt"
 SECRET_KEY = "supersecretkey"  # Replace this with a proper secret key
 
 # Set up your OpenAI API key securely
-openai_api_key = st.secrets["OpenAI_key"]
-openai.api_key = openai_api_key
+# openai_api_key = st.secrets["OpenAI_key"]
+# openai.api_key = openai_api_key
 
 # Define the base directory for your PDF files
 base_dir = "ALL_PDFs"
