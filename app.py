@@ -20,9 +20,6 @@ load_dotenv()  # Load environment variables from .env
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
-
-
-
 # File paths for user data and activity logs
 USER_DATA_FILE = "user_data.json"
 ACTIVITY_LOG_FILE = "activity_log.txt"
@@ -30,8 +27,8 @@ RLHF_DATA_FILE = "rlhf_data.txt"
 SECRET_KEY = "supersecretkey"  # Replace this with a proper secret key
 
 # Set up your OpenAI API key securely
-# openai_api_key = st.secrets["OpenAI_key"]
-# openai.api_key = openai_api_key
+openai_api_key = st.secrets["OpenAI_key"]
+openai.api_key = openai_api_key
 
 # Define the base directory for your PDF files
 base_dir = "ALL_PDFs"

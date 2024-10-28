@@ -10,7 +10,6 @@ streamlit_pdf_viewer
 PyMuPDF
 python-Levenshtein
 openai==0.28
-python-dotenv
 
 
 # uncomment to use huggingface llms
