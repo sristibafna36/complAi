@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Alerts</title>
+    <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .alert {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Real-Time RBI Updates</h1>
+    <div id="alerts"></div>
+
+    <script>
+        const socket = io.connect("http://localhost:5000");
+        const alertsDiv = document.getElementById("alerts");
+
+        socket.on("new_update", function (data) {
+            const alert = document.createElement("div");
+            alert.classList.add("alert");
+            alert.innerHTML = `<strong>${data.title}</strong><br>Date: ${data.date}<br><a href="${data.link}" target="_blank">Read More</a>`;
+            alertsDiv.prepend(alert);
+        });
+    </script>
+</body>
+
+</html>
